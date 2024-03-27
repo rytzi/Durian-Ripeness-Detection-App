@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:thesis/ui/camera.dart';
 import 'package:thesis/widget/card.dart';
 
 class Home extends StatefulWidget {
@@ -33,10 +34,13 @@ class _HomeState extends State<Home> {
       body: Center(
         child: Column(
           children: [
+            Spacer(),
             CardWidget(
                 title: 'Open Camera',
-                tapped: () {},
+                tapped: () {Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const CameraScreen()));},
                 ),
+            Spacer(),
           ],
         ),
       ),
