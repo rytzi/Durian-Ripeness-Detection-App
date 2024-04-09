@@ -18,11 +18,6 @@ class _CameraScreenState extends State<CameraScreen>
   late AnimationController _flashModeControlRowAnimationController;
   late Animation<double> _flashModeControlRowAnimation;
   late CameraController controller;
-  final double _minAvailableZoom = 1.0;
-  final double _maxAvailableZoom = 1.0;
-  double _currentScale = 1.0;
-  double _baseScale = 1.0;
-  int _pointers = 0;
 
   @override
   void initState() {
@@ -94,37 +89,15 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Widget _cameraPreviewWidget() {
-    return Listener(
-        onPointerDown: (_) => _pointers++,
-        onPointerUp: (_) => _pointers--,
-        child: CameraPreview(
+    return CameraPreview(
           controller,
           child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 return GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onScaleStart: _handleScaleStart,
-                  onScaleUpdate: _handleScaleUpdate,
                 );
               }),
-        ),
       );
-  }
-
-  void _handleScaleStart(ScaleStartDetails details) {
-    _baseScale = _currentScale;
-  }
-
-  Future<void> _handleScaleUpdate(ScaleUpdateDetails details) async {
-    // When there are not exactly two fingers on screen don't scale
-    if (_pointers != 2) {
-      return;
-    }
-
-    _currentScale = (_baseScale * details.scale)
-        .clamp(_minAvailableZoom, _maxAvailableZoom);
-
-    await controller.setZoomLevel(_currentScale);
   }
 
   Widget _modeControlRowWidget() {

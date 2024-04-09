@@ -1,7 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:thesis/ui/home.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
+// import 'package:thesis/ui/home.dart';
+import 'package:thesis/ui/welcome.dart';
 
 late List<CameraDescription> cameras;
 
@@ -11,8 +11,6 @@ void logError(String code, String? message) {
 }
 
 Future<void> main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   try {
     WidgetsFlutterBinding.ensureInitialized();
     cameras = await availableCameras();
@@ -31,11 +29,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Durian Ripeness Detection App',
       theme: ThemeData(
-        primaryColor: Colors.green,
-        useMaterial3: true,
+        fontFamily: 'Georgia',
+        primaryColor: const Color(0xFFB1FF96),
+        primaryColorDark: const Color(0xFF427624),
       ),
       debugShowCheckedModeBanner: false,
-      home: const Home(),
+      home: const WelcomeScreen(),
     );
   }
 }
