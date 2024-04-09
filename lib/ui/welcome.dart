@@ -13,30 +13,30 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColorDark,
-      body: Center(
-        child: AnimatedTextKit(
-          isRepeatingAnimation: false,
-          onFinished: () {
-            Navigator.pushReplacement(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation1, animation2) => Home(),
+        backgroundColor: Theme.of(context).primaryColorDark,
+        body: Center(
+          child: AnimatedTextKit(
+            isRepeatingAnimation: false,
+            onFinished: () {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) => Home(),
+                ),
+              );
+            },
+            animatedTexts: [
+              FadeAnimatedText(
+                'Welcome!',
+                textStyle: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-            );
-          },
-          animatedTexts: [
-            FadeAnimatedText(
-              'Welcome!',
-              textStyle: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            ScaleAnimatedText(
-              'Durian Ripeness Detection App',
-              textStyle: TextStyle(fontSize: 20.0, color: Colors.white),
-            ),
-          ],
-        ),
-      )
+              ScaleAnimatedText(
+                'Durian Ripeness Detection App',
+                textStyle: TextStyle(fontSize: 20.0, color: Colors.white),
+              ),
+            ],
+          ),
+        )
     );
   }
 }
