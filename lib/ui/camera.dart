@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:thesis/ui/sensor.dart';
 import '../main.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -30,14 +31,7 @@ class _CameraScreenState extends State<CameraScreen>
       setState(() {});
     }).catchError((Object e) {
       if (e is CameraException) {
-        switch (e.code) {
-          case 'CameraAccessDenied':
-          // Handle access errors here.
-            break;
-          default:
-          // Handle other errors here.
-            break;
-        }
+        print('Camera Error: ' + e.code);
       }
     });
     super.initState();
@@ -64,25 +58,40 @@ class _CameraScreenState extends State<CameraScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).primaryColorDark,
         title: const Text('Camera'),
       ),
+      endDrawer: Drawer(
+          child: Padding(
+        padding: const EdgeInsets.only(top: 30.0, bottom: 20.0),
+        child: Column(
+          children: [
+            ListTile(
+              leading: Icon(Icons.list),
+              title: Text("GFG item"),
+              trailing: Icon(Icons.done),
+            ),
+            Spacer(),
+            TextButton(
+              //TODO: Add conditional for when images are valid
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const GasSensorScreen()));
+                },
+                child: Text('Proceed')),
+          ],
+        ),
+      )),
       body: Column(
         children: <Widget>[
           Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(1.0),
-                child: Center(
-                  child: _cameraPreviewWidget(),
-                ),
-              ),
+            child: Center(
+              child: _cameraPreviewWidget(),
             ),
           ),
-                _captureControlRowWidget(),
-                _modeControlRowWidget(),
+          _controlRowWidget(),
         ],
       ),
     );
@@ -90,31 +99,42 @@ class _CameraScreenState extends State<CameraScreen>
 
   Widget _cameraPreviewWidget() {
     return CameraPreview(
-          controller,
-          child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                );
-              }),
-      );
+      controller,
+      child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+        );
+      }),
+    );
   }
 
-  Widget _modeControlRowWidget() {
-    return Column(
-      children: <Widget>[
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.flash_on),
-              color: Colors.blue,
-              onPressed: onFlashModeButtonPressed,
-            ),
-          ],
-        ),
-        _flashModeControlRowWidget(),
-      ],
+  Widget _controlRowWidget() {
+    final CameraController cameraController = controller;
+    return Padding(
+      padding: const EdgeInsets.only(top: 15.0, bottom: 20.0),
+      child: Column(
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.camera_alt),
+                color: Theme.of(context).primaryColorDark,
+                onPressed: cameraController.value.isInitialized
+                    ? onTakePictureButtonPressed
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.flash_on),
+                color: Theme.of(context).primaryColorDark,
+                onPressed: onFlashModeButtonPressed,
+              ),
+            ],
+          ),
+          _flashModeControlRowWidget(),
+        ],
+      ),
     );
   }
 
@@ -128,47 +148,35 @@ class _CameraScreenState extends State<CameraScreen>
             IconButton(
               icon: const Icon(Icons.flash_off),
               color: controller.value.flashMode == FlashMode.off
-                  ? Colors.orange
-                  : Colors.blue,
+                  ? Theme.of(context).primaryColorDark
+                  : Colors.grey,
               onPressed: () => onSetFlashModeButtonPressed(FlashMode.off),
             ),
             IconButton(
               icon: const Icon(Icons.flash_auto),
               color: controller.value.flashMode == FlashMode.auto
-                  ? Colors.orange
-                  : Colors.blue,
+                  ? Theme.of(context).primaryColorDark
+                  : Colors.grey,
               onPressed: () => onSetFlashModeButtonPressed(FlashMode.auto),
             ),
             IconButton(
               icon: const Icon(Icons.flash_on),
               color: controller.value.flashMode == FlashMode.always
-                  ? Colors.orange
-                  : Colors.blue,
+                  ? Theme.of(context).primaryColorDark
+                  : Colors.grey,
               onPressed: () => onSetFlashModeButtonPressed(FlashMode.always),
             ),
             IconButton(
               icon: const Icon(Icons.highlight),
               color: controller.value.flashMode == FlashMode.torch
-                  ? Colors.orange
-                  : Colors.blue,
+                  ? Theme.of(context).primaryColorDark
+                  : Colors.grey,
               onPressed: () => onSetFlashModeButtonPressed(FlashMode.torch),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _captureControlRowWidget() {
-    final CameraController cameraController = controller;
-
-    return IconButton(
-          icon: const Icon(Icons.camera_alt),
-          color: Colors.blue,
-          onPressed: cameraController.value.isInitialized
-              ? onTakePictureButtonPressed
-              : null,
-        );
   }
 
   String timestamp() => DateTime.now().millisecondsSinceEpoch.toString();
@@ -216,6 +224,7 @@ class _CameraScreenState extends State<CameraScreen>
       rethrow;
     }
   }
+
   Future<XFile?> takePicture() async {
     final CameraController cameraController = controller;
     if (cameraController.value.isTakingPicture) {
