@@ -29,7 +29,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Durian Ripeness Detection App',
       theme: ThemeData(
-        fontFamily: 'Georgia',
         primaryColor: const Color(0xFFB1FF96),
         primaryColorDark: const Color(0xFF427624),
       ),
