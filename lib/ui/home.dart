@@ -144,7 +144,6 @@ class _HomeState extends State<Home> {
             ),
             const Spacer(),
             CardWidget(
-              title: 'Open Camera',
               cardHeight: queryData.size.height * .1,
               cardWidth: queryData.size.width * .60,
               content: const Text(

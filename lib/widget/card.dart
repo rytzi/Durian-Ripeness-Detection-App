@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
 class CardWidget extends StatelessWidget {
-  final String title;
   final content, tapped;
   final double cardHeight, cardWidth;
 
   const CardWidget({
     Key? key,
-    required this.title, this.tapped, required this.cardHeight, required this.cardWidth, this.content
+    this.tapped, required this.cardHeight, required this.cardWidth, this.content
   }) : super(key: key);
 
   @override
@@ -20,9 +19,9 @@ class CardWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(13),
         boxShadow: const [
           BoxShadow(
-            offset: Offset(0, 16),
-            blurRadius: 20,
-            spreadRadius: -20,
+            offset: Offset(0, 10),
+            blurRadius: 10,
+            spreadRadius: -15,
             color: Colors.black,
           ),
         ],

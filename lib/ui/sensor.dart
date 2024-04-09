@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:thesis/widget/step.dart';
 
 import '../assets/svgFiles.dart';
+import 'analysis.dart';
 
 class GasSensorScreen extends StatefulWidget {
   const GasSensorScreen({super.key});
@@ -51,7 +52,14 @@ class _GasSensorScreenState extends State<GasSensorScreen> {
               Spacer(),
               TextButton(
                   //TODO: Fetch Aroma Data from ESP and save to Firebase
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation1, animation2) => AnalysisScreen(),
+                      ),
+                    );
+                  },
                   child: Text('Ready to Measure')),
               Spacer(),
             ],
