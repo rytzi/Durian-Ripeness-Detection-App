@@ -1,7 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-// import 'package:thesis/ui/home.dart';
 import 'package:thesis/ui/welcome.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 late List<CameraDescription> cameras;
 
@@ -11,6 +12,8 @@ void logError(String code, String? message) {
 }
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
   try {
     WidgetsFlutterBinding.ensureInitialized();
     cameras = await availableCameras();

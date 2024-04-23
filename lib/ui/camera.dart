@@ -67,8 +67,19 @@ class _CameraScreenState extends State<CameraScreen>
         child: Column(
           children: [
             ListTile(
-              leading: Icon(Icons.list),
-              title: Text("GFG item"),
+              title: Text("Front"),
+              trailing: Icon(Icons.done),
+            ),
+            ListTile(
+              title: Text("Left"),
+              trailing: Icon(Icons.done),
+            ),
+            ListTile(
+              title: Text("Back"),
+              trailing: Icon(Icons.done),
+            ),
+            ListTile(
+              title: Text("Right"),
               trailing: Icon(Icons.done),
             ),
             Spacer(),
