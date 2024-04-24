@@ -43,6 +43,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   loading_animation_widget: ^1.2.1
   firebase_core: ^2.24.2
+  firebase_storage: ^11.6.0
 
 dev_dependencies:
   flutter_test:

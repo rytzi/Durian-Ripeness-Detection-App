@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "330558158098",
+    "project_id": "durio-ripeness-detector",
+    "storage_bucket": "durio-ripeness-detector.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:330558158098:android:36ce2cc7ffdadda8deafcb",
+        "android_client_info": {
+          "package_name": "com.example.thesis"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdZZuxjTWzfCOlfMVzIWApW09Nvhw7F2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

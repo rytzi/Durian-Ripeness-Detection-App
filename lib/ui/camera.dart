@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:thesis/ui/sensor.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../main.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -15,10 +17,13 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
-  XFile? imageFile;
+  List<XFile?> imageFiles = [];
+  int pictureCount = 0;
+  PageController _pageController = PageController();
   late AnimationController _flashModeControlRowAnimationController;
   late Animation<double> _flashModeControlRowAnimation;
   late CameraController controller;
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -57,44 +62,73 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColorDark,
         title: const Text('Camera'),
       ),
       endDrawer: Drawer(
-          child: Padding(
-        padding: const EdgeInsets.only(top: 30.0, bottom: 20.0),
-        child: Column(
-          children: [
-            ListTile(
-              title: Text("Front"),
-              trailing: Icon(Icons.done),
-            ),
-            ListTile(
-              title: Text("Left"),
-              trailing: Icon(Icons.done),
-            ),
-            ListTile(
-              title: Text("Back"),
-              trailing: Icon(Icons.done),
-            ),
-            ListTile(
-              title: Text("Right"),
-              trailing: Icon(Icons.done),
-            ),
-            Spacer(),
-            TextButton(
-              //TODO: Add conditional for when images are valid
+        child: Padding(
+          padding: const EdgeInsets.only(top: 30.0, bottom: 20.0),
+          child: Column(
+            children: [
+              ListTile(
+                title: Text("Front"),
+                trailing: Icon(
+                  Icons.done,
+                  color: pictureCount >= 1
+                      ? Theme.of(context).primaryColorDark
+                      : Colors.grey,),
+              ),
+              ListTile(
+                title: Text("Left"),
+                trailing: Icon(
+                  Icons.done,
+                  color: pictureCount >= 2
+                      ? Theme.of(context).primaryColorDark
+                      : Colors.grey,),
+              ),
+              ListTile(
+                title: Text("Back"),
+                trailing: Icon(
+                  Icons.done,
+                  color: pictureCount >= 3
+                      ? Theme.of(context).primaryColorDark
+                      : Colors.grey,),
+              ),
+              ListTile(
+                title: Text("Right"),
+                trailing: Icon(
+                  Icons.done,
+                  color: pictureCount >= 4
+                      ? Theme.of(context).primaryColorDark
+                      : Colors.grey,),
+              ),
+              Spacer(),
+              TextButton(
                 onPressed: () {
+                  for (var imageFile in imageFiles) {
+                    if (imageFile != null) {
+                      uploadImageToFirebase(imageFile);
+                    }
+                  }
                   Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const GasSensorScreen()));
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GasSensorScreen(),
+                    ),
+                  );
+                  setState(() {
+                    imageFiles.clear();
+                    pictureCount = 0;
+                  });
                 },
-                child: Text('Proceed')),
-          ],
+                child: Text('Proceed'),
+              ),
+            ],
+          ),
         ),
-      )),
+      ),
       body: Column(
         children: <Widget>[
           Expanded(
@@ -112,11 +146,12 @@ class _CameraScreenState extends State<CameraScreen>
     return CameraPreview(
       controller,
       child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-        );
-      }),
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+          );
+        },
+      ),
     );
   }
 
@@ -197,17 +232,120 @@ class _CameraScreenState extends State<CameraScreen>
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void openEndDrawer() {
+    scaffoldKey.currentState?.openEndDrawer();
+  }
+
   void onTakePictureButtonPressed() {
-    takePicture().then((XFile? file) {
-      //TODO: VALIDATE AND ADD TO DB
-      if (mounted) {
-        setState(() {
-          imageFile = file;
-        });
-        if (file != null) {
-          showInSnackBar('Picture saved to ${file.path}');
+    if (pictureCount < 4) {
+      takePicture().then((XFile? file) {
+        if (mounted && file != null) {
+          setState(() {
+            imageFiles.add(file);
+            pictureCount++;
+            _showPhotoPreview();
+          });
         }
-      }
+      });
+    } else {
+      openEndDrawer();
+    }
+  }
+
+  Future<List<XFile?>> capturePictures(int count) async {
+    List<XFile?> files = [];
+    for (var i = 0; i < count; i++) {
+      XFile? file = await takePicture();
+      files.add(file);
+    }
+    return files;
+  }
+
+  void _showPhotoPreview() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Preview"),
+          content:  Image.file(File(imageFiles[pictureCount-1]!.path)),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Retake"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  imageFiles.removeLast();
+                  pictureCount--;
+                });
+              },
+            ),
+            TextButton(
+              child: Text(pictureCount < 4 ? "Next" : "Confirm"),
+              onPressed: () {
+                if (pictureCount < 4) {
+                  Navigator.of(context).pop();
+                  _pageController.nextPage(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                } else {
+                  Navigator.of(context).pop();
+                  openEndDrawer();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showPreviewDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Preview"),
+          content: SizedBox(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.width * .60,
+            child: GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              children: [
+                for (var file in imageFiles)
+                  Image.file(
+                    File(file!.path),
+                    width: 200,
+                    height: 200,
+                    fit: BoxFit.cover,
+                  ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Retake"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void uploadImageToFirebase(XFile imageFile) {
+    final FirebaseStorage storage = FirebaseStorage.instance;
+    final Reference ref = storage.ref().child("images").child(timestamp() + ".jpg");
+    final UploadTask uploadTask = ref.putFile(File(imageFile.path));
+    uploadTask.then((res) {
+      res.ref.getDownloadURL().then((url) {
+        showInSnackBar("Image uploaded to Firebase: $url");
+      });
+    }).catchError((err) {
+      showInSnackBar("Failed to upload image to Firebase: $err");
     });
   }
 
