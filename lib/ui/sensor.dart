@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:thesis/widget/step.dart';
-
-import '../assets/svgFiles.dart';
-import 'analysis.dart';
+import 'package:thesis/ui/result.dart';
 
 class GasSensorScreen extends StatefulWidget {
   const GasSensorScreen({super.key});
@@ -14,8 +11,6 @@ class GasSensorScreen extends StatefulWidget {
 class _GasSensorScreenState extends State<GasSensorScreen> {
   @override
   Widget build(BuildContext context) {
-    MediaQueryData queryData = MediaQuery.of(context);
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColorDark,
@@ -53,10 +48,11 @@ class _GasSensorScreenState extends State<GasSensorScreen> {
               TextButton(
                   //TODO: Fetch Aroma Data from ESP and save to Firebase
                   onPressed: () {
+                    //TODO: Add UI for fetching aroma data
                     Navigator.pushReplacement(
                       context,
                       PageRouteBuilder(
-                        pageBuilder: (context, animation1, animation2) => AnalysisScreen(),
+                        pageBuilder: (context, animation1, animation2) => ResultScreen(),
                       ),
                     );
                   },

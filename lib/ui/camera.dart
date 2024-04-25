@@ -19,7 +19,6 @@ class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
   List<XFile?> imageFiles = [];
   int pictureCount = 0;
-  PageController _pageController = PageController();
   late AnimationController _flashModeControlRowAnimationController;
   late Animation<double> _flashModeControlRowAnimation;
   late CameraController controller;
@@ -73,57 +72,117 @@ class _CameraScreenState extends State<CameraScreen>
           child: Column(
             children: [
               ListTile(
-                title: Text("Front"),
+                title: Text("Side 1"),
+                leading: imageFiles.isNotEmpty && pictureCount >= 1
+                    ? Image.file(
+                        File(imageFiles[0]!.path),
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      )
+                    : Icon(Icons.image),
                 trailing: Icon(
                   Icons.done,
                   color: pictureCount >= 1
                       ? Theme.of(context).primaryColorDark
                       : Colors.grey,),
+                  onTap: () => {
+                    imageFiles.isNotEmpty && pictureCount >= 1
+                      ? _showPhotoPreview(0, false)
+                      : toggleEndDrawer()}
               ),
               ListTile(
-                title: Text("Left"),
+                title: Text("Side 2"),
+                leading: imageFiles.isNotEmpty && pictureCount >= 2
+                    ? Image.file(
+                  File(imageFiles[1]!.path),
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                )
+                    : Icon(Icons.image),
                 trailing: Icon(
                   Icons.done,
                   color: pictureCount >= 2
                       ? Theme.of(context).primaryColorDark
                       : Colors.grey,),
+                  onTap: () => {
+                    imageFiles.isNotEmpty && pictureCount >= 2
+                        ? _showPhotoPreview(1, false)
+                        : toggleEndDrawer()}
               ),
               ListTile(
-                title: Text("Back"),
+                title: Text("Side 3"),
+                leading: imageFiles.isNotEmpty && pictureCount >= 3
+                    ? Image.file(
+                  File(imageFiles[2]!.path),
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                )
+                    : Icon(Icons.image),
                 trailing: Icon(
                   Icons.done,
                   color: pictureCount >= 3
                       ? Theme.of(context).primaryColorDark
                       : Colors.grey,),
+                  onTap: () => {
+                    imageFiles.isNotEmpty && pictureCount >= 3
+                        ? _showPhotoPreview(2, false)
+                        : toggleEndDrawer()}
               ),
               ListTile(
-                title: Text("Right"),
+                title: Text("Side 4"),
+                leading: imageFiles.isNotEmpty && pictureCount >= 4
+                    ? Image.file(
+                  File(imageFiles[3]!.path),
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                )
+                    : Icon(Icons.image),
                 trailing: Icon(
                   Icons.done,
                   color: pictureCount >= 4
                       ? Theme.of(context).primaryColorDark
                       : Colors.grey,),
+                  onTap: () => {
+                    imageFiles.isNotEmpty && pictureCount >= 4
+                        ? _showPhotoPreview(3, false)
+                        : toggleEndDrawer()}
               ),
               Spacer(),
               TextButton(
                 onPressed: () {
-                  for (var imageFile in imageFiles) {
-                    if (imageFile != null) {
-                      uploadImageToFirebase(imageFile);
+                  if (pictureCount == 4) {
+                    for (var imageFile in imageFiles) {
+                      if (imageFile != null) {
+                        uploadImageToFirebase(imageFile);
+                      }
                     }
+                    showInSnackBar("Image saved");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GasSensorScreen(),
+                      ),
+                    );
+                    setState(() {
+                      imageFiles.clear();
+                      pictureCount = 0;
+                    });
+                  } else {
+                    showInSnackBar("Needs 4 sides, only found $pictureCount");
                   }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const GasSensorScreen(),
-                    ),
-                  );
-                  setState(() {
-                    imageFiles.clear();
-                    pictureCount = 0;
-                  });
                 },
-                child: Text('Proceed'),
+                child: Text(
+                  'Proceed',
+                  style: TextStyle(
+                    color: pictureCount == 4
+                        ? Theme.of(context).primaryColorDark
+                        : Colors.grey,
+                  ),
+                ),
               ),
             ],
           ),
@@ -225,15 +284,17 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
-  String timestamp() => DateTime.now().millisecondsSinceEpoch.toString();
-
   void showInSnackBar(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void openEndDrawer() {
-    scaffoldKey.currentState?.openEndDrawer();
+  void toggleEndDrawer() {
+    if (scaffoldKey.currentState?.isEndDrawerOpen ?? false) {
+      scaffoldKey.currentState?.openEndDrawer();
+    } else {
+      scaffoldKey.currentState?.openEndDrawer();
+    }
   }
 
   void onTakePictureButtonPressed() {
@@ -242,13 +303,12 @@ class _CameraScreenState extends State<CameraScreen>
         if (mounted && file != null) {
           setState(() {
             imageFiles.add(file);
-            pictureCount++;
-            _showPhotoPreview();
+            _showPhotoPreview(pictureCount, true);
           });
         }
       });
     } else {
-      openEndDrawer();
+      toggleEndDrawer();
     }
   }
 
@@ -261,36 +321,43 @@ class _CameraScreenState extends State<CameraScreen>
     return files;
   }
 
-  void _showPhotoPreview() {
+  void _showPhotoPreview(int index, onPictureTake) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text("Preview"),
-          content:  Image.file(File(imageFiles[pictureCount-1]!.path)),
+          content: Image.file(File(imageFiles[index]!.path)),
           actions: <Widget>[
             TextButton(
               child: Text("Retake"),
               onPressed: () {
+                if (onPictureTake) {
+                  setState(() {
+                    imageFiles.removeLast();
+                  });
+                } else {
+                  setState(() {
+                    imageFiles.removeAt(index);
+                    pictureCount--;
+                  });
+                }
                 Navigator.of(context).pop();
-                setState(() {
-                  imageFiles.removeLast();
-                  pictureCount--;
-                });
               },
             ),
             TextButton(
-              child: Text(pictureCount < 4 ? "Next" : "Confirm"),
+              child: Text(onPictureTake ? "Next" : "Confirm"),
               onPressed: () {
                 if (pictureCount < 4) {
+                  if (onPictureTake) {
+                    setState(() {
+                      pictureCount++;
+                    });
+                  }
                   Navigator.of(context).pop();
-                  _pageController.nextPage(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
                 } else {
                   Navigator.of(context).pop();
-                  openEndDrawer();
+                  toggleEndDrawer();
                 }
               },
             ),
@@ -300,52 +367,18 @@ class _CameraScreenState extends State<CameraScreen>
     );
   }
 
-  void showPreviewDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Preview"),
-          content: SizedBox(
-            width: double.infinity,
-            height: MediaQuery.of(context).size.width * .60,
-            child: GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              children: [
-                for (var file in imageFiles)
-                  Image.file(
-                    File(file!.path),
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("Retake"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+  String timestamp() => DateTime.now().toString();
 
   void uploadImageToFirebase(XFile imageFile) {
     final FirebaseStorage storage = FirebaseStorage.instance;
-    final Reference ref = storage.ref().child("images").child(timestamp() + ".jpg");
+    final Reference ref = storage.ref().child("images").child("${timestamp()}.jpg");
     final UploadTask uploadTask = ref.putFile(File(imageFile.path));
     uploadTask.then((res) {
       res.ref.getDownloadURL().then((url) {
-        showInSnackBar("Image uploaded to Firebase: $url");
+        //TODO: WHAT TO DO WITH URL?
       });
     }).catchError((err) {
-      showInSnackBar("Failed to upload image to Firebase: $err");
+      showInSnackBar("Failed to save image");
     });
   }
 

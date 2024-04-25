@@ -27,12 +27,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             },
             animatedTexts: [
               FadeAnimatedText(
-                'Welcome!',
+                'Welcome! \n Durian Ripeness Detection App',
                 textStyle: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              ScaleAnimatedText(
-                'Durian Ripeness Detection App',
-                textStyle: TextStyle(fontSize: 20.0, color: Colors.white),
               ),
             ],
           ),
