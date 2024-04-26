@@ -4,6 +4,7 @@ import 'package:thesis/widget/card.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -13,10 +14,28 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
+  bool isLoading = false;
+  Map<String, dynamic>? resultsData;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAromaData()
+        .then((data) {
+      analyzeData(data)
+          .then((result) {
+        setState(() {
+          isLoading = result;
+        });
+      });
+    })
+    ;
+  }
+
   @override
   Widget build(BuildContext context) {
     MediaQueryData queryData = MediaQuery.of(context);
-    if (analyzeData()) {
+    if (isLoading) {
       return Scaffold(
           backgroundColor: Theme.of(context).primaryColorDark,
           body: Stack(children: [
@@ -107,20 +126,14 @@ class _ResultScreenState extends State<ResultScreen> {
                   ],
                 ),
                 Spacer(),
-                Row(
-                  children: [
-                    Spacer(),
-                    CardWidget(
-                      cardHeight: queryData.size.width * .45,
-                      cardWidth: queryData.size.width * .45,
-                      content: _results('Aroma ANN',
-                          resultsData[0]?["Artificial Neural Network Analysis"]
-                              ? "RIPE" : "UNRIPE",
-                          resultsData[0]?["ANN Accuracy"],
-                          queryData.size.height * .045, queryData.size.height * .025),
-                    ),
-                    Spacer(),
-                  ],
+                CardWidget(
+                  cardHeight: queryData.size.width * .45,
+                  cardWidth: queryData.size.width * .45,
+                  content: _results('Aroma ANN',
+                      resultsData[0]?["Artificial Neural Network Analysis"]
+                          ? "RIPE" : "UNRIPE",
+                      resultsData[0]?["ANN Accuracy"],
+                      queryData.size.height * .045, queryData.size.height * .025),
                 ),
                 Spacer(),
                 CardWidget(
@@ -153,9 +166,55 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 }
 
-bool analyzeData() {
-  bool analyzeDone = true;
-  return !analyzeDone;
+Future<Object> fetchAromaData() async {
+  try {
+    QuerySnapshot<Map<String, dynamic>> snapshot =
+    await FirebaseFirestore.instance
+        .collection('Durio Aroma Test')
+        .get();
+
+    List<Map<String, dynamic>> resultsData =
+    snapshot.docs
+        .map((e) => e.data() as Map<String, dynamic>)
+        .toList();
+    // child: FutureBuilder<Object>(
+    //   future: fetchResultsData(),
+    //   builder: (BuildContext context, AsyncSnapshot<Object> snapshot) {
+    //     if (snapshot.connectionState == ConnectionState.waiting) {
+    //       return Center(child: CircularProgressIndicator()); // Show a loading indicator while fetching data
+    //     } else if (snapshot.hasError) {
+    //       return Center(child: Text('Error: ${snapshot.error}'));
+    //     } else {
+    //       List<Map<String, dynamic>> data = snapshot.data as List<Map<String, dynamic>>;
+    //       if (data.isNotEmpty) {
+    //         return Text(data[0]["dataset"]["data 1"]["value"].toString() ?? 'Data not available'); // Access your desired field
+    //       } else {
+    //         return Center(child: Text('No data available'));
+    //       }
+    //     }
+    //   },
+    // ),
+    return resultsData;
+  } catch (e) {
+    print('Error fetching data: $e');
+    return {};
+  }
+}
+
+Future<bool> analyzeData(aromaData) async {
+
+  try {
+    final interpreter =
+        await Interpreter.fromAsset('assets/' /**TODO: Add tf model here**/);
+    final isolateInterpreter =
+        await IsolateInterpreter.create(address: interpreter.address);
+    await isolateInterpreter.run(aromaData, 'output');
+    await isolateInterpreter.runForMultipleInputs(aromaData, 'outputs' as Map<int, Object>);
+    return false;
+  } catch (e) {
+    print('error: $e');
+    return true;
+  }
 }
 
 _results(title, result, percent, resultSize, fontSize) {

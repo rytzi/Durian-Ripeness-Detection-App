@@ -46,9 +46,7 @@ class _GasSensorScreenState extends State<GasSensorScreen> {
               ),
               Spacer(),
               TextButton(
-                  //TODO: Fetch Aroma Data from ESP and save to Firebase
                   onPressed: () {
-                    //TODO: Add UI for fetching aroma data
                     Navigator.pushReplacement(
                       context,
                       PageRouteBuilder(
