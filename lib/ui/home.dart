@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:thesis/assets/svgFiles.dart';
-import 'package:thesis/ui/camera.dart';
+import 'package:thesis/ui/sensor.dart';
 import 'package:thesis/widget/card.dart';
 import 'package:thesis/widget/step.dart';
 
@@ -80,17 +79,17 @@ class _HomeState extends State<Home> {
                 StepWidget(
                     svgHeight: queryData.size.height * .3,
                     svgWidth: queryData.size.height * .3,
-                    svg: captureSides,
-                    step: 'STEP 1: Capture Four Sides of Durian\n\n',
+                    svg: durianPosition,
+                    step: 'STEP 1: Gas Sensor Placement\n\n',
                     description:
-                        'Position Durian on a flat surface with good lighting. Use the camera to capture images of all four sides of the fruit. Align each side with the designated section on the screen. Ensure each picture is clear and focused to facilitate accurate analysis.'),
+                        'Place the gas sensor near the Durian (2-3cm). For best result place the sensor near the durian`s stalk. Turn on sensor and make sure it is connected to the internet. (see led for indication)'),
                 StepWidget(
                     svgHeight: queryData.size.height * .3,
                     svgWidth: queryData.size.height * .3,
-                    svg: durianPosition,
-                    step: 'STEP 2: Gas Sensor Placement\n\n',
+                    svg: captureSides,
+                    step: 'STEP 2: Capture Four Sides of Durian\n\n',
                     description:
-                        'After capturing the images, place the gas sensor near the Durian (--- meters). The sensor should be positioned securely. This step is crucial for detecting ethylene gas, a key indicator of ripeness.'),
+                        'Position Durian on a flat surface with good lighting. Use the camera to capture images of all four sides of the fruit. Align each side with the designated section on the screen. Ensure each picture is clear and focused to facilitate accurate analysis.'),
                 StepWidget(
                     svgHeight: queryData.size.height * .3,
                     svgWidth: queryData.size.height * .3,
@@ -129,7 +128,7 @@ class _HomeState extends State<Home> {
                                 text: 'Press ',
                               ),
                               TextSpan(
-                                  text: '"Open Camera"',
+                                  text: '"Get Started"',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                               TextSpan(
@@ -147,14 +146,14 @@ class _HomeState extends State<Home> {
               cardHeight: queryData.size.height * .1,
               cardWidth: queryData.size.width * .60,
               content: const Text(
-                'Open Camera',
+                'Get Started',
                 style: TextStyle(fontSize: 20),
               ),
               tapped: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const CameraScreen()));
+                        builder: (context) => const GasSensorScreen()));
               },
             ),
             const Spacer(),

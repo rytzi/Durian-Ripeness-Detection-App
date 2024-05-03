@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:thesis/ui/sensor.dart';
+import 'package:thesis/ui/result.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../helper/input.dart';
 import '../main.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -155,16 +156,32 @@ class _CameraScreenState extends State<CameraScreen>
               TextButton(
                 onPressed: () {
                   if (pictureCount == 4) {
+                    int index = 1;
                     for (var imageFile in imageFiles) {
                       if (imageFile != null) {
-                        uploadImageToFirebase(imageFile);
+                        switch (index) {
+                          case 1:
+                            UserInput.instance.setImage1(imageFile);
+                            break;
+                          case 2:
+                            UserInput.instance.setImage2(imageFile);
+                            break;
+                          case 3:
+                            UserInput.instance.setImage3(imageFile);
+                            break;
+                          case 4:
+                            UserInput.instance.setImage4(imageFile);
+                            break;
+                        }
+                        // uploadImageToFirebase(imageFile);
+                        index++;
                       }
                     }
                     showInSnackBar("Image saved");
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const GasSensorScreen(),
+                        builder: (context) => const ResultScreen(),
                       ),
                     );
                     setState(() {
@@ -323,6 +340,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   void _showPhotoPreview(int index, onPictureTake) {
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(

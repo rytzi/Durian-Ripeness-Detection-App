@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:thesis/helper/result.dart';
 import 'package:thesis/ui/home.dart';
 import 'package:thesis/widget/card.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../helper/input.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -15,7 +17,6 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   bool isLoading = false;
-  Map<String, dynamic>? resultsData;
 
   @override
   void initState() {
@@ -35,6 +36,14 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     MediaQueryData queryData = MediaQuery.of(context);
+    var overallResults = overallRipeness(
+        ResultModel.instance.CNN,
+        ResultModel.instance.ANN,
+        ResultModel.instance.ICA,
+        ResultModel.instance.CNNA,
+        ResultModel.instance.ANNA,
+        ResultModel.instance.ICAA
+    );
     if (isLoading) {
       return Scaffold(
           backgroundColor: Theme.of(context).primaryColorDark,
@@ -79,86 +88,67 @@ class _ResultScreenState extends State<ResultScreen> {
         ),
         body: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: StreamBuilder(
-            stream: FirebaseFirestore.instance
-                .collection('Ripeness Result')
-                .snapshots(),
-            builder: (BuildContext context,
-                AsyncSnapshot<QuerySnapshot> snapshot) {
-              List<Map<String, dynamic>?>? resultsData = snapshot
-                  .data?.docs
-                  .map((e) => e.data() as Map<String, dynamic>?)
-                  .toList();
-              var overallResults = overallRipeness(
-                resultsData![0]?["Convolutional Neural Network Analysis"],
-                resultsData[0]?["Artificial Neural Network Analysis"],
-                resultsData[0]?["Image Color Analysis"],
-                resultsData[0]?["CNN Accuracy"],
-                resultsData[0]?["ANN Accuracy"],
-                resultsData[0]?["ICA Accuracy"],
-              );
-            return Column(
-              children: [
-                Spacer(),
-                Row(
-                  children: [
-                    Spacer(),
-                    CardWidget(
-                      cardHeight: queryData.size.width * .45,
-                      cardWidth: queryData.size.width * .45,
-                      content: _results('Image CNN+VGG',
-                          resultsData[0]?["Convolutional Neural Network Analysis"]
-                              ? "RIPE" : "UNRIPE",
-                          resultsData[0]?["CNN Accuracy"],
-                          queryData.size.height * .045, queryData.size.height * .02),
-                    ),
-                    Spacer(),
-                    CardWidget(
-                      cardHeight: queryData.size.width * .45,
-                      cardWidth: queryData.size.width * .45,
-                      content: _results('Image Color Analysis',
-                          resultsData[0]?["Image Color Analysis"]
-                              ? "RIPE" : "UNRIPE",
-                          resultsData[0]?["ICA Accuracy"],
-                          queryData.size.height * .045, queryData.size.height * .02),
-                    ),
-                    Spacer(),
-                  ],
-                ),
-                Spacer(),
-                CardWidget(
-                  cardHeight: queryData.size.width * .45,
-                  cardWidth: queryData.size.width * .45,
-                  content: _results('Aroma ANN',
-                      resultsData[0]?["Artificial Neural Network Analysis"]
-                          ? "RIPE" : "UNRIPE",
-                      resultsData[0]?["ANN Accuracy"],
-                      queryData.size.height * .045, queryData.size.height * .025),
-                ),
-                Spacer(),
-                CardWidget(
-                  cardHeight: queryData.size.width * .6,
-                  cardWidth: queryData.size.width * .6,
-                  content: _results('Overall',
-                      overallResults.$1
-                          ? "RIPE" : "UNRIPE",
-                      overallResults.$2.toStringAsFixed(2),
-                      queryData.size.height * .075, queryData.size.height * .035),
-                ),
-                Spacer(),
-                TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation1, animation2) =>
-                              Home(),
-                        ),
-                      );
-                    },
-                    child: Text('Detect Another'))
-              ],
-            );}
+          child: Column(
+            children: [
+              Spacer(),
+              Row(
+                children: [
+                  Spacer(),
+                  CardWidget(
+                    cardHeight: queryData.size.width * .45,
+                    cardWidth: queryData.size.width * .45,
+                    content: _results('Image CNN+VGG',
+                        ResultModel.instance.CNN
+                            ? "RIPE" : "UNRIPE",
+                        ResultModel.instance.CNNA,
+                        queryData.size.height * .045, queryData.size.height * .02),
+                  ),
+                  Spacer(),
+                  CardWidget(
+                    cardHeight: queryData.size.width * .45,
+                    cardWidth: queryData.size.width * .45,
+                    content: _results('Image Color Analysis',
+                        ResultModel.instance.ICA
+                            ? "RIPE" : "UNRIPE",
+                        ResultModel.instance.ICAA,
+                        queryData.size.height * .045, queryData.size.height * .02),
+                  ),
+                  Spacer(),
+                ],
+              ),
+              Spacer(),
+              CardWidget(
+                cardHeight: queryData.size.width * .45,
+                cardWidth: queryData.size.width * .45,
+                content: _results('Aroma ANN',
+                    ResultModel.instance.ANN
+                        ? "RIPE" : "UNRIPE",
+                    ResultModel.instance.ANNA,
+                    queryData.size.height * .045, queryData.size.height * .025),
+              ),
+              Spacer(),
+              CardWidget(
+                cardHeight: queryData.size.width * .6,
+                cardWidth: queryData.size.width * .6,
+                content: _results('Overall',
+                    overallResults.$1
+                        ? "RIPE" : "UNRIPE",
+                    overallResults.$2.toStringAsFixed(2),
+                    queryData.size.height * .075, queryData.size.height * .035),
+              ),
+              Spacer(),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation1, animation2) =>
+                            Home(),
+                      ),
+                    );
+                  },
+                  child: Text('Detect Another'))
+            ],
           ),
         ),
       );
@@ -172,28 +162,12 @@ Future<Object> fetchAromaData() async {
     await FirebaseFirestore.instance
         .collection('Durio Aroma Test')
         .get();
-
     List<Map<String, dynamic>> resultsData =
     snapshot.docs
         .map((e) => e.data() as Map<String, dynamic>)
         .toList();
-    // child: FutureBuilder<Object>(
-    //   future: fetchResultsData(),
-    //   builder: (BuildContext context, AsyncSnapshot<Object> snapshot) {
-    //     if (snapshot.connectionState == ConnectionState.waiting) {
-    //       return Center(child: CircularProgressIndicator()); // Show a loading indicator while fetching data
-    //     } else if (snapshot.hasError) {
-    //       return Center(child: Text('Error: ${snapshot.error}'));
-    //     } else {
-    //       List<Map<String, dynamic>> data = snapshot.data as List<Map<String, dynamic>>;
-    //       if (data.isNotEmpty) {
-    //         return Text(data[0]["dataset"]["data 1"]["value"].toString() ?? 'Data not available'); // Access your desired field
-    //       } else {
-    //         return Center(child: Text('No data available'));
-    //       }
-    //     }
-    //   },
-    // ),
+
+    UserInput.instance.setAromaData(resultsData);
     return resultsData;
   } catch (e) {
     print('Error fetching data: $e');
@@ -202,14 +176,18 @@ Future<Object> fetchAromaData() async {
 }
 
 Future<bool> analyzeData(aromaData) async {
-
+  final interpreter = await Interpreter.fromAsset('lib/assets/ann_model.tflite');
   try {
-    final interpreter =
-        await Interpreter.fromAsset('assets/' /**TODO: Add tf model here**/);
-    final isolateInterpreter =
-        await IsolateInterpreter.create(address: interpreter.address);
-    await isolateInterpreter.run(aromaData, 'output');
-    await isolateInterpreter.runForMultipleInputs(aromaData, 'outputs' as Map<int, Object>);
+    List<double> aromaValues = [];
+    for (int i = 1; i <= 60; i++) {
+      aromaValues.add(double.parse(UserInput.instance.aromaData[0]["dataset"]["data $i"]["value"]));
+    }
+    print(aromaValues.toString());
+    var input = [aromaValues];
+    var output = List.filled(1, List.filled(1, 0.0), growable: false);
+    interpreter.run(input, output);
+    ResultModel.instance.setIsRipeANN(output[0][0] >= 0.5);
+    ResultModel.instance.setANNA(output[0][0] >= 0.5 ? output[0][0]*100 : 100-output[0][0]*100);
     return false;
   } catch (e) {
     print('error: $e');

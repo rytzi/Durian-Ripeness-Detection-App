@@ -2,7 +2,6 @@ import 'package:camera/camera.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:thesis/ui/result.dart';
 import 'package:thesis/ui/welcome.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -50,7 +49,7 @@ class MyApp extends StatelessWidget {
         primaryColorDark: const Color(0xFF427624),
       ),
       debugShowCheckedModeBanner: false,
-      home: const ResultScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }

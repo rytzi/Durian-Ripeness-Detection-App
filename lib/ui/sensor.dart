@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:thesis/ui/result.dart';
+import 'package:thesis/ui/camera.dart';
 
 class GasSensorScreen extends StatefulWidget {
   const GasSensorScreen({super.key});
@@ -23,7 +23,7 @@ class _GasSensorScreenState extends State<GasSensorScreen> {
             children: [
               Spacer(),
               Text(
-                'Before proceeding with the analysis, it`s essential to place the gas sensor properly',
+                'To ensure an accurate reading, place the gas sensor properly',
                 style: TextStyle(fontSize: 20),
               ),
               Spacer(),
@@ -40,7 +40,12 @@ class _GasSensorScreenState extends State<GasSensorScreen> {
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       TextSpan(
                         text:
-                            ' away from the durian or as shown in the illustration.',
+                            ' away from the durian or as shown in the illustration.'
+                                '\n\nTurn your sensor on and wait for the led to light up,'
+                                ' an indication that it had been connected to the internet.'
+                                '\n\nAroma Data acquisition will take approx. 1min.'
+                                ' Blinking led indicates that data has been acquired.'
+                                ' (Sensor can be turned off after).',
                       )
                     ]),
               ),
@@ -50,11 +55,11 @@ class _GasSensorScreenState extends State<GasSensorScreen> {
                     Navigator.pushReplacement(
                       context,
                       PageRouteBuilder(
-                        pageBuilder: (context, animation1, animation2) => ResultScreen(),
+                        pageBuilder: (context, animation1, animation2) => CameraScreen(),
                       ),
                     );
                   },
-                  child: Text('Ready to Measure')),
+                  child: Text('Proceed')),
               Spacer(),
             ],
           ),
