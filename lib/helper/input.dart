@@ -5,7 +5,7 @@ class UserInput {
   late XFile image2;
   late XFile image3;
   late XFile image4;
-  late List<Map<String, dynamic>> aromaData;
+  late List<double> aromaData;
 
   UserInput._privateConstructor();
 
@@ -28,7 +28,7 @@ class UserInput {
     image4 = image;
   }
 
-  void setAromaData(List<Map<String, dynamic>> data) {
+  void setAromaData(List<double> data) {
     aromaData = data;
   }
 }

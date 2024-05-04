@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image/image.dart';
+import 'dart:async';
 import 'package:thesis/helper/result.dart';
 import 'package:thesis/ui/home.dart';
 import 'package:thesis/widget/card.dart';
@@ -7,6 +9,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../helper/input.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:flutter/services.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -16,7 +19,7 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
-  bool isLoading = false;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -166,9 +169,11 @@ Future<Object> fetchAromaData() async {
     snapshot.docs
         .map((e) => e.data() as Map<String, dynamic>)
         .toList();
-
-    UserInput.instance.setAromaData(resultsData);
-    return resultsData;
+    List<double> aromaValues = [];
+    for (int i = 1; i <= 60; i++) {
+      aromaValues.add(double.parse(resultsData[0]["dataset"]["data $i"]["value"]));
+    }
+    return aromaValues;
   } catch (e) {
     print('Error fetching data: $e');
     return {};
@@ -176,23 +181,90 @@ Future<Object> fetchAromaData() async {
 }
 
 Future<bool> analyzeData(aromaData) async {
+  UserInput.instance.setAromaData(aromaData);
   final interpreter = await Interpreter.fromAsset('lib/assets/ann_model.tflite');
   try {
-    List<double> aromaValues = [];
-    for (int i = 1; i <= 60; i++) {
-      aromaValues.add(double.parse(UserInput.instance.aromaData[0]["dataset"]["data $i"]["value"]));
-    }
-    print(aromaValues.toString());
-    var input = [aromaValues];
+    //FOR AROMA DATA
+    print(UserInput.instance.aromaData.toString());
+    var input = [UserInput.instance.aromaData];
     var output = List.filled(1, List.filled(1, 0.0), growable: false);
     interpreter.run(input, output);
     ResultModel.instance.setIsRipeANN(output[0][0] >= 0.5);
     ResultModel.instance.setANNA(output[0][0] >= 0.5 ? output[0][0]*100 : 100-output[0][0]*100);
-    return false;
+    //FOR COLOR DATA
+    return testRipenessByColor();
   } catch (e) {
     print('error: $e');
     return true;
   }
+}
+
+Future<bool> testRipenessByColor() async {
+  var imagePaths = [
+  UserInput.instance.image1.path,
+  UserInput.instance.image2.path,
+  UserInput.instance.image3.path,
+  UserInput.instance.image4.path
+  ];
+  var ripenessPerSide = [];
+  var accuracyPerSide = [];
+
+  for (var i = 0; i < 4; i++){
+    var image = await decodeImageFile(imagePaths[i]);
+    var imageData = image?.toUint8List();
+    int brownPixelCount = 0;
+    int greenPixelCount = 0;
+    for (int i = 0; i < imageData!.lengthInBytes; i += 4) {
+      int r = imageData[i];
+      int g = imageData[i + 1];
+      // int b = imageData[i + 2];
+      int brownIntensity = (r + g) ~/ 2;
+      int greenIntensity = g;
+      if (brownIntensity > greenIntensity) {
+        brownPixelCount++;
+      } else {
+        greenPixelCount++;
+      }
+    }
+    int totalPixels = imageData.lengthInBytes ~/ 4;
+    double brownPercentage = brownPixelCount / totalPixels;
+    double greenPercentage = greenPixelCount / totalPixels;
+    if (brownPercentage > greenPercentage) {
+      ripenessPerSide.add(true);
+      accuracyPerSide.add(brownPercentage);
+    } else {
+      ripenessPerSide.add(false);
+      accuracyPerSide.add(greenPercentage);
+    }
+  }
+
+  bool overallPredictionIsRipe;
+  double precision;
+  overallPredictionIsRipe = 0 <= ((ripenessPerSide[0]?1:-1) +
+      (ripenessPerSide[1]?1:-1) +
+      (ripenessPerSide[2]?1:-1) +
+      (ripenessPerSide[3]?1:-1)) ? true : false;
+  double ripePrecision = (
+      (ripenessPerSide[0] ?
+      accuracyPerSide[0] :
+      100-accuracyPerSide[0]) +
+          (ripenessPerSide[1] ?
+          accuracyPerSide[1] :
+          100-accuracyPerSide[1]) +
+          (ripenessPerSide[2] ?
+          accuracyPerSide[2] :
+          100-accuracyPerSide[2]) +
+          (ripenessPerSide[3] ?
+          accuracyPerSide[3] :
+          100-accuracyPerSide[3])) / 4;
+  if (overallPredictionIsRipe) {
+    precision = ripePrecision;
+  } else {
+    precision = 100 - ripePrecision;
+  }
+  ResultModel.instance.setIsRipeICA(overallPredictionIsRipe);
+  ResultModel.instance.setICAA(precision * 100);
+  return false;
 }
 
 _results(title, result, percent, resultSize, fontSize) {

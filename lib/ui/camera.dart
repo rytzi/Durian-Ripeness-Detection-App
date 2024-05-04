@@ -185,6 +185,7 @@ class _CameraScreenState extends State<CameraScreen>
                       ),
                     );
                     setState(() {
+                      setFlashMode(FlashMode.off);
                       imageFiles.clear();
                       pictureCount = 0;
                     });
