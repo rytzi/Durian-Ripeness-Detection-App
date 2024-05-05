@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:image/image.dart';
+import 'package:image/image.dart' as img;
 import 'dart:async';
 import 'package:thesis/helper/result.dart';
 import 'package:thesis/ui/home.dart';
@@ -9,7 +9,6 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../helper/input.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
-import 'package:flutter/services.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -24,16 +23,13 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    fetchAromaData()
-        .then((data) {
-      analyzeData(data)
-          .then((result) {
+    fetchAromaData().then((data) {
+      analyzeData(data).then((result) {
         setState(() {
           isLoading = result;
         });
       });
-    })
-    ;
+    });
   }
 
   @override
@@ -45,15 +41,14 @@ class _ResultScreenState extends State<ResultScreen> {
         ResultModel.instance.ICA,
         ResultModel.instance.CNNA,
         ResultModel.instance.ANNA,
-        ResultModel.instance.ICAA
-    );
+        ResultModel.instance.ICAA);
     if (isLoading) {
       return Scaffold(
           backgroundColor: Theme.of(context).primaryColorDark,
           body: Stack(children: [
             Center(
-              child:
-              LoadingAnimationWidget.inkDrop(color: Colors.white, size: 100),
+              child: LoadingAnimationWidget.inkDrop(
+                  color: Colors.white, size: 100),
             ),
             Column(
               children: [
@@ -78,9 +73,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 Spacer(flex: 1)
               ],
             ),
-          ]
-          )
-      );
+          ]));
     } else {
       return Scaffold(
         appBar: AppBar(
@@ -100,21 +93,23 @@ class _ResultScreenState extends State<ResultScreen> {
                   CardWidget(
                     cardHeight: queryData.size.width * .45,
                     cardWidth: queryData.size.width * .45,
-                    content: _results('Image CNN+VGG',
-                        ResultModel.instance.CNN
-                            ? "RIPE" : "UNRIPE",
+                    content: _results(
+                        'Image CNN+VGG',
+                        ResultModel.instance.CNN ? "RIPE" : "UNRIPE",
                         ResultModel.instance.CNNA,
-                        queryData.size.height * .045, queryData.size.height * .02),
+                        queryData.size.height * .045,
+                        queryData.size.height * .02),
                   ),
                   Spacer(),
                   CardWidget(
                     cardHeight: queryData.size.width * .45,
                     cardWidth: queryData.size.width * .45,
-                    content: _results('Image Color Analysis',
-                        ResultModel.instance.ICA
-                            ? "RIPE" : "UNRIPE",
+                    content: _results(
+                        'Image Color Analysis',
+                        ResultModel.instance.ICA ? "RIPE" : "UNRIPE",
                         ResultModel.instance.ICAA,
-                        queryData.size.height * .045, queryData.size.height * .02),
+                        queryData.size.height * .045,
+                        queryData.size.height * .02),
                   ),
                   Spacer(),
                 ],
@@ -123,21 +118,23 @@ class _ResultScreenState extends State<ResultScreen> {
               CardWidget(
                 cardHeight: queryData.size.width * .45,
                 cardWidth: queryData.size.width * .45,
-                content: _results('Aroma ANN',
-                    ResultModel.instance.ANN
-                        ? "RIPE" : "UNRIPE",
+                content: _results(
+                    'Aroma ANN',
+                    ResultModel.instance.ANN ? "RIPE" : "UNRIPE",
                     ResultModel.instance.ANNA,
-                    queryData.size.height * .045, queryData.size.height * .025),
+                    queryData.size.height * .045,
+                    queryData.size.height * .025),
               ),
               Spacer(),
               CardWidget(
                 cardHeight: queryData.size.width * .6,
                 cardWidth: queryData.size.width * .6,
-                content: _results('Overall',
-                    overallResults.$1
-                        ? "RIPE" : "UNRIPE",
+                content: _results(
+                    'Overall',
+                    overallResults.$1 ? "RIPE" : "UNRIPE",
                     overallResults.$2.toStringAsFixed(2),
-                    queryData.size.height * .075, queryData.size.height * .035),
+                    queryData.size.height * .075,
+                    queryData.size.height * .035),
               ),
               Spacer(),
               TextButton(
@@ -162,16 +159,13 @@ class _ResultScreenState extends State<ResultScreen> {
 Future<Object> fetchAromaData() async {
   try {
     QuerySnapshot<Map<String, dynamic>> snapshot =
-    await FirebaseFirestore.instance
-        .collection('Durio Aroma Test')
-        .get();
+        await FirebaseFirestore.instance.collection('Durio Aroma Test').get();
     List<Map<String, dynamic>> resultsData =
-    snapshot.docs
-        .map((e) => e.data() as Map<String, dynamic>)
-        .toList();
+        snapshot.docs.map((e) => e.data() as Map<String, dynamic>).toList();
     List<double> aromaValues = [];
     for (int i = 1; i <= 60; i++) {
-      aromaValues.add(double.parse(resultsData[0]["dataset"]["data $i"]["value"]));
+      aromaValues
+          .add(double.parse(resultsData[0]["dataset"]["data $i"]["value"]));
     }
     return aromaValues;
   } catch (e) {
@@ -182,35 +176,117 @@ Future<Object> fetchAromaData() async {
 
 Future<bool> analyzeData(aromaData) async {
   UserInput.instance.setAromaData(aromaData);
-  final interpreter = await Interpreter.fromAsset('lib/assets/ann_model.tflite');
+  final armInterpreter =
+      await Interpreter.fromAsset('lib/assets/ann_model.tflite');
+  final imgInterpreter =
+      await Interpreter.fromAsset('lib/assets/cnn_model.tflite');
   try {
-    //FOR AROMA DATA
-    print(UserInput.instance.aromaData.toString());
-    var input = [UserInput.instance.aromaData];
-    var output = List.filled(1, List.filled(1, 0.0), growable: false);
-    interpreter.run(input, output);
-    ResultModel.instance.setIsRipeANN(output[0][0] >= 0.5);
-    ResultModel.instance.setANNA(output[0][0] >= 0.5 ? output[0][0]*100 : 100-output[0][0]*100);
-    //FOR COLOR DATA
-    return testRipenessByColor();
+    bool isReady1 = feedToANNModel(armInterpreter);
+    Future<bool> isReady2Future = feedToCNNModel(imgInterpreter);
+    Future<bool> isReady3Future = testRipenessByColor();
+    var isReady2 = await isReady2Future;
+    var isReady3 = await isReady3Future;
+    return isReady1 && isReady2 && isReady3;
   } catch (e) {
     print('error: $e');
     return true;
   }
 }
 
-Future<bool> testRipenessByColor() async {
+bool feedToANNModel(Interpreter interpreter) {
+  var input = [UserInput.instance.aromaData];
+  var output = List.filled(1, List.filled(1, 0.0), growable: false);
+  interpreter.run(input, output);
+  ResultModel.instance.setIsRipeANN(output[0][0] >= 0.5);
+  ResultModel.instance.setANNA(
+      output[0][0] >= 0.5 ? output[0][0] * 100 : 100 - output[0][0] * 100);
+  return false;
+}
+
+Future<bool> feedToCNNModel(Interpreter interpreter) async {
   var imagePaths = [
-  UserInput.instance.image1.path,
-  UserInput.instance.image2.path,
-  UserInput.instance.image3.path,
-  UserInput.instance.image4.path
+    UserInput.instance.image1.path,
+    UserInput.instance.image2.path,
+    UserInput.instance.image3.path,
+    UserInput.instance.image4.path
   ];
   var ripenessPerSide = [];
   var accuracyPerSide = [];
 
-  for (var i = 0; i < 4; i++){
-    var image = await decodeImageFile(imagePaths[i]);
+  for (var i = 0; i < 4; i++) {
+    var image = await convertXfiletoTensor4D(imagePaths[i], 1, 150, 150, 3);
+    var results = List.filled(1, List.filled(2, 0.0), growable: false);
+    interpreter.run(image, results);
+    if (results[0][0] >= results[0][1]){
+      accuracyPerSide.add(results[0][0]);
+      ripenessPerSide.add(true);
+    } else {
+      accuracyPerSide.add(results[0][1]);
+      ripenessPerSide.add(false);
+    }
+  }
+
+  bool overallPredictionIsRipe;
+  double precision;
+  overallPredictionIsRipe = 0 <=
+      ((ripenessPerSide[0] ? 1 : -1) +
+          (ripenessPerSide[1] ? 1 : -1) +
+          (ripenessPerSide[2] ? 1 : -1) +
+          (ripenessPerSide[3] ? 1 : -1))
+      ? true
+      : false;
+  double ripePrecision = ((ripenessPerSide[0]
+      ? accuracyPerSide[0]
+      : 100 - accuracyPerSide[0]) +
+      (ripenessPerSide[1] ? accuracyPerSide[1] : 100 - accuracyPerSide[1]) +
+      (ripenessPerSide[2] ? accuracyPerSide[2] : 100 - accuracyPerSide[2]) +
+      (ripenessPerSide[3]
+          ? accuracyPerSide[3]
+          : 100 - accuracyPerSide[3])) /
+      4;
+  if (overallPredictionIsRipe) {
+    precision = ripePrecision;
+  } else {
+    precision = 100 - ripePrecision;
+  }
+  ResultModel.instance.setIsRipeCNN(overallPredictionIsRipe);
+  ResultModel.instance.setCNNA(precision * 100);
+  return false;
+}
+
+Future<List<List<List<List<int>>>>> convertXfiletoTensor4D(String imagePath, int batch, int height, int width, int imageChannel) async {
+  var image = await img.decodeImageFile(imagePath);
+  var imageData = image?.toUint8List();
+  List<List<List<List<int>>>> result = List.generate(batch, (_) =>
+      List.generate(height, (_) =>
+          List.generate(width, (_) =>
+              List.generate(imageChannel, (_) => 0))));
+
+  int index = 0;
+  for (int i = 0; i < batch; i++) {
+    for (int j = 0; j < height; j++) {
+      for (int k = 0; k < width; k++) {
+        for (int l = 0; l < imageChannel; l++) {
+          result[i][j][k][l] = imageData![index++];
+        }
+      }
+    }
+  }
+  return result;
+}
+
+Future<bool> testRipenessByColor() async {
+  var imagePaths = [
+    UserInput.instance.image1.path,
+    UserInput.instance.image2.path,
+    UserInput.instance.image3.path,
+    UserInput.instance.image4.path
+  ];
+  var ripenessPerSide = [];
+  var accuracyPerSide = [];
+
+  for (var i = 0; i < 4; i++) {
+    var image = await img.decodeImageFile(imagePaths[i]);
     var imageData = image?.toUint8List();
     int brownPixelCount = 0;
     int greenPixelCount = 0;
@@ -240,23 +316,22 @@ Future<bool> testRipenessByColor() async {
 
   bool overallPredictionIsRipe;
   double precision;
-  overallPredictionIsRipe = 0 <= ((ripenessPerSide[0]?1:-1) +
-      (ripenessPerSide[1]?1:-1) +
-      (ripenessPerSide[2]?1:-1) +
-      (ripenessPerSide[3]?1:-1)) ? true : false;
-  double ripePrecision = (
-      (ripenessPerSide[0] ?
-      accuracyPerSide[0] :
-      100-accuracyPerSide[0]) +
-          (ripenessPerSide[1] ?
-          accuracyPerSide[1] :
-          100-accuracyPerSide[1]) +
-          (ripenessPerSide[2] ?
-          accuracyPerSide[2] :
-          100-accuracyPerSide[2]) +
-          (ripenessPerSide[3] ?
-          accuracyPerSide[3] :
-          100-accuracyPerSide[3])) / 4;
+  overallPredictionIsRipe = 0 <=
+          ((ripenessPerSide[0] ? 1 : -1) +
+              (ripenessPerSide[1] ? 1 : -1) +
+              (ripenessPerSide[2] ? 1 : -1) +
+              (ripenessPerSide[3] ? 1 : -1))
+      ? true
+      : false;
+  double ripePrecision = ((ripenessPerSide[0]
+              ? accuracyPerSide[0]
+              : 100 - accuracyPerSide[0]) +
+          (ripenessPerSide[1] ? accuracyPerSide[1] : 100 - accuracyPerSide[1]) +
+          (ripenessPerSide[2] ? accuracyPerSide[2] : 100 - accuracyPerSide[2]) +
+          (ripenessPerSide[3]
+              ? accuracyPerSide[3]
+              : 100 - accuracyPerSide[3])) /
+      4;
   if (overallPredictionIsRipe) {
     precision = ripePrecision;
   } else {
@@ -287,9 +362,7 @@ _results(title, result, percent, resultSize, fontSize) {
       ),
       Spacer(),
       Text(
-          title == 'Overall'
-              ? 'precision:\n$percent%'
-              : 'accuracy:\n$percent%',
+          title == 'Overall' ? 'precision:\n$percent%' : 'accuracy:\n$percent%',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: fontSize)),
       Spacer(),
@@ -300,8 +373,12 @@ _results(title, result, percent, resultSize, fontSize) {
 (bool, double) overallRipeness(CNN, ANN, ICA, CNNA, ANNA, ICAA) {
   bool overallPredictionIsRipe;
   double precision;
-  double ripePrecision = ((CNN?CNNA:100-CNNA)+(ANN?ANNA:100-ANNA)+(ICA?ICAA:100-ICAA)) / 3;
-  overallPredictionIsRipe = 0 <= ((CNN?1:-1)+(ANN?1:-1)+(ICA?1:-1)) ? true : false;
+  double ripePrecision = ((CNN ? CNNA : 100 - CNNA) +
+          (ANN ? ANNA : 100 - ANNA) +
+          (ICA ? ICAA : 100 - ICAA)) /
+      3;
+  overallPredictionIsRipe =
+      0 <= ((CNN ? 1 : -1) + (ANN ? 1 : -1) + (ICA ? 1 : -1)) ? true : false;
   if (overallPredictionIsRipe) {
     precision = ripePrecision;
   } else {

@@ -400,6 +400,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.7"
+  image_pixels:
+    dependency: "direct main"
+    description:
+      name: image_pixels
+      sha256: "205ba56bf115c30a2b1ac9a8d6dc36f7c634000af038d2bab37bd2901eb0d219"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.1"
   js:
     dependency: transitive
     description:
