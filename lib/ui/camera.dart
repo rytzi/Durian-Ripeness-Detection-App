@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
+import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:thesis/ui/result.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../helper/input.dart';
 import '../main.dart';
+import '../widget/stencil.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -73,85 +76,89 @@ class _CameraScreenState extends State<CameraScreen>
           child: Column(
             children: [
               ListTile(
-                title: Text("Side 1"),
-                leading: imageFiles.isNotEmpty && pictureCount >= 1
-                    ? Image.file(
-                        File(imageFiles[0]!.path),
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover,
-                      )
-                    : Icon(Icons.image),
-                trailing: Icon(
-                  Icons.done,
-                  color: pictureCount >= 1
-                      ? Theme.of(context).primaryColorDark
-                      : Colors.grey,),
+                  title: Text("Side 1"),
+                  leading: imageFiles.isNotEmpty && pictureCount >= 1
+                      ? Image.file(
+                          File(imageFiles[0]!.path),
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        )
+                      : Icon(Icons.image),
+                  trailing: Icon(
+                    Icons.done,
+                    color: pictureCount >= 1
+                        ? Theme.of(context).primaryColorDark
+                        : Colors.grey,
+                  ),
                   onTap: () => {
-                    imageFiles.isNotEmpty && pictureCount >= 1
-                      ? _showPhotoPreview(0, false)
-                      : toggleEndDrawer()}
-              ),
+                        imageFiles.isNotEmpty && pictureCount >= 1
+                            ? _showPhotoPreview(0, false)
+                            : toggleEndDrawer()
+                      }),
               ListTile(
-                title: Text("Side 2"),
-                leading: imageFiles.isNotEmpty && pictureCount >= 2
-                    ? Image.file(
-                  File(imageFiles[1]!.path),
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                )
-                    : Icon(Icons.image),
-                trailing: Icon(
-                  Icons.done,
-                  color: pictureCount >= 2
-                      ? Theme.of(context).primaryColorDark
-                      : Colors.grey,),
+                  title: Text("Side 2"),
+                  leading: imageFiles.isNotEmpty && pictureCount >= 2
+                      ? Image.file(
+                          File(imageFiles[1]!.path),
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        )
+                      : Icon(Icons.image),
+                  trailing: Icon(
+                    Icons.done,
+                    color: pictureCount >= 2
+                        ? Theme.of(context).primaryColorDark
+                        : Colors.grey,
+                  ),
                   onTap: () => {
-                    imageFiles.isNotEmpty && pictureCount >= 2
-                        ? _showPhotoPreview(1, false)
-                        : toggleEndDrawer()}
-              ),
+                        imageFiles.isNotEmpty && pictureCount >= 2
+                            ? _showPhotoPreview(1, false)
+                            : toggleEndDrawer()
+                      }),
               ListTile(
-                title: Text("Side 3"),
-                leading: imageFiles.isNotEmpty && pictureCount >= 3
-                    ? Image.file(
-                  File(imageFiles[2]!.path),
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                )
-                    : Icon(Icons.image),
-                trailing: Icon(
-                  Icons.done,
-                  color: pictureCount >= 3
-                      ? Theme.of(context).primaryColorDark
-                      : Colors.grey,),
+                  title: Text("Side 3"),
+                  leading: imageFiles.isNotEmpty && pictureCount >= 3
+                      ? Image.file(
+                          File(imageFiles[2]!.path),
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        )
+                      : Icon(Icons.image),
+                  trailing: Icon(
+                    Icons.done,
+                    color: pictureCount >= 3
+                        ? Theme.of(context).primaryColorDark
+                        : Colors.grey,
+                  ),
                   onTap: () => {
-                    imageFiles.isNotEmpty && pictureCount >= 3
-                        ? _showPhotoPreview(2, false)
-                        : toggleEndDrawer()}
-              ),
+                        imageFiles.isNotEmpty && pictureCount >= 3
+                            ? _showPhotoPreview(2, false)
+                            : toggleEndDrawer()
+                      }),
               ListTile(
-                title: Text("Side 4"),
-                leading: imageFiles.isNotEmpty && pictureCount >= 4
-                    ? Image.file(
-                  File(imageFiles[3]!.path),
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                )
-                    : Icon(Icons.image),
-                trailing: Icon(
-                  Icons.done,
-                  color: pictureCount >= 4
-                      ? Theme.of(context).primaryColorDark
-                      : Colors.grey,),
+                  title: Text("Side 4"),
+                  leading: imageFiles.isNotEmpty && pictureCount >= 4
+                      ? Image.file(
+                          File(imageFiles[3]!.path),
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                        )
+                      : Icon(Icons.image),
+                  trailing: Icon(
+                    Icons.done,
+                    color: pictureCount >= 4
+                        ? Theme.of(context).primaryColorDark
+                        : Colors.grey,
+                  ),
                   onTap: () => {
-                    imageFiles.isNotEmpty && pictureCount >= 4
-                        ? _showPhotoPreview(3, false)
-                        : toggleEndDrawer()}
-              ),
+                        imageFiles.isNotEmpty && pictureCount >= 4
+                            ? _showPhotoPreview(3, false)
+                            : toggleEndDrawer()
+                      }),
               Spacer(),
               TextButton(
                 onPressed: () {
@@ -177,7 +184,6 @@ class _CameraScreenState extends State<CameraScreen>
                         index++;
                       }
                     }
-                    showInSnackBar("Image saved");
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -222,12 +228,23 @@ class _CameraScreenState extends State<CameraScreen>
   Widget _cameraPreviewWidget() {
     return CameraPreview(
       controller,
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-          );
-        },
+      child: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+              );
+            },
+          ),
+          Center(
+            child: CircularBorder(
+              width: 3,
+              size: MediaQuery.of(context).size.width - 10,
+              color: Theme.of(context).primaryColor,
+            ),
+          )
+        ]
       ),
     );
   }
@@ -366,7 +383,10 @@ class _CameraScreenState extends State<CameraScreen>
             ),
             TextButton(
               child: Text(onPictureTake ? "Next" : "Confirm"),
-              onPressed: () {
+              onPressed: () async {
+                final imgInterpreter = await Interpreter.fromAsset(
+                    'lib/assets/durian_detector.tflite');
+                print(imgInterpreter.getInputTensors());
                 if (pictureCount < 4) {
                   if (onPictureTake) {
                     setState(() {
@@ -390,7 +410,8 @@ class _CameraScreenState extends State<CameraScreen>
 
   void uploadImageToFirebase(XFile imageFile) {
     final FirebaseStorage storage = FirebaseStorage.instance;
-    final Reference ref = storage.ref().child("images").child("${timestamp()}.jpg");
+    final Reference ref =
+        storage.ref().child("images").child("${timestamp()}.jpg");
     final UploadTask uploadTask = ref.putFile(File(imageFile.path));
     uploadTask.then((res) {
       res.ref.getDownloadURL().then((url) {
@@ -427,14 +448,46 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Future<XFile?> takePicture() async {
+    showInSnackBar('Processing picture. Please wait.');
     final CameraController cameraController = controller;
+    final interpreter =
+    await Interpreter.fromAsset('lib/assets/durian_detector.tflite');
     if (cameraController.value.isTakingPicture) {
       return null;
     }
 
     try {
       final XFile file = await cameraController.takePicture();
-      return file;
+      var image = await img.decodeImageFile(file.path);
+      var size = image?.width;
+      var startX = 0;
+      var startY = (image!.height - size!) ~/ 2;
+      var croppedImage = img.copyCrop(image, x: startX, y: startY, height: size, width: size);
+      var resizedImage = img.copyResize(croppedImage, width: 224, height: 224);
+      var imageData = resizedImage.toUint8List();
+      List<List<List<List<int>>>> result = List.generate(1, (_) =>
+          List.generate(224, (_) =>
+              List.generate(224, (_) =>
+                  List.generate(3, (_) => 0))));
+      int index = 0;
+      for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < 224; j++) {
+          for (int k = 0; k < 224; k++) {
+            for (int l = 0; l < 3; l++) {
+              result[i][j][k][l] = imageData[index++];
+            }
+          }
+        }
+      }
+      var output = List.filled(1, List.filled(2, 0.0), growable: false);
+      interpreter.run(result, output);
+      print(output);
+      if (output[0][0] > output[0][1]) {
+        return file;
+      } else {
+        showInSnackBar('Our system is uncertain whether this picture contains a durian fruit. To improve accuracy, you can try retaking the picture.');
+        return file;
+      }
     } on CameraException catch (e) {
       _showCameraException(e);
       return null;

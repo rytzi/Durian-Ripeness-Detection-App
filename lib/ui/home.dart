@@ -82,7 +82,7 @@ class _HomeState extends State<Home> {
                     svg: durianPosition,
                     step: 'STEP 1: Gas Sensor Placement\n\n',
                     description:
-                        'Place the gas sensor near the Durian (2-3cm). For best result place the sensor near the durian`s stalk. Turn on sensor and make sure it is connected to the internet. (see led for indication)'),
+                        'Place the gas sensor near the Durian (2-3cm). For best result place the sensor near the durian`s stalk. Turn on sensor and make sure it is connected to the internet.'),
                 StepWidget(
                     svgHeight: queryData.size.height * .3,
                     svgWidth: queryData.size.height * .3,
@@ -96,14 +96,14 @@ class _HomeState extends State<Home> {
                     svg: dataProcessing,
                     step: 'STEP 3: Analysis Process\n\n',
                     description:
-                        'Once the images and gas sensor data are confirmed, the app will begin the analysis process. Our advanced algorithms will assess various aspects of the fruit, including its appearance, color, gas emissions, and chemical composition.'),
+                        'Once the images and gas sensor data are confirmed, the app will begin the analysis process. Our advanced algorithms will assess various aspects of the fruit, including its appearance, color, adn gas/chemical emissions'),
                 StepWidget(
                     svgHeight: queryData.size.height * .3,
                     svgWidth: queryData.size.height * .3,
                     svg: viewResult,
                     step: 'STEP 4: Review Results\n\n',
                     description:
-                        'After analysis completion, you shall receive detailed results for each aspect, including CNN, color, ethyl content, sulfur content, and acid content analysis results. The final accumulated result will provide an overall assessment of durian`s ripeness, accompanied by an accuracy percentage.'),
+                        'After analysis completion, you shall receive detailed results for each aspect, including image CNN, color, and gas analysis results. The final accumulated result will provide an overall assessment of durian`s ripeness, accompanied by an accuracy percentage.'),
                 Center(
                   child: Column(
                     children: [

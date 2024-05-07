@@ -156,12 +156,20 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 }
 
+double calculateAverageOfArray(numbers) {
+  double sum = 0.0;
+  for (double number in numbers) {
+    sum += number;
+  }
+  return sum / numbers.length;
+}
+
 Future<Object> fetchAromaData() async {
   try {
     QuerySnapshot<Map<String, dynamic>> snapshot =
         await FirebaseFirestore.instance.collection('Durio Aroma Test').get();
     List<Map<String, dynamic>> resultsData =
-        snapshot.docs.map((e) => e.data() as Map<String, dynamic>).toList();
+        snapshot.docs.map((e) => e.data()).toList();
     List<double> aromaValues = [];
     for (int i = 1; i <= 60; i++) {
       aromaValues
@@ -210,53 +218,38 @@ Future<bool> feedToCNNModel(Interpreter interpreter) async {
     UserInput.instance.image3.path,
     UserInput.instance.image4.path
   ];
-  var ripenessPerSide = [];
-  var accuracyPerSide = [];
-
+  var ripeAccuracy = [];
+  var unripeAccuracy = [];
   for (var i = 0; i < 4; i++) {
     var image = await convertXfiletoTensor4D(imagePaths[i], 1, 150, 150, 3);
     var results = List.filled(1, List.filled(2, 0.0), growable: false);
     interpreter.run(image, results);
-    if (results[0][0] >= results[0][1]){
-      accuracyPerSide.add(results[0][0]);
-      ripenessPerSide.add(true);
-    } else {
-      accuracyPerSide.add(results[0][1]);
-      ripenessPerSide.add(false);
-    }
+    ripeAccuracy.add(results[0][0]);
+    unripeAccuracy.add(results[0][1]);
   }
-
-  bool overallPredictionIsRipe;
-  double precision;
-  overallPredictionIsRipe = 0 <=
-      ((ripenessPerSide[0] ? 1 : -1) +
-          (ripenessPerSide[1] ? 1 : -1) +
-          (ripenessPerSide[2] ? 1 : -1) +
-          (ripenessPerSide[3] ? 1 : -1))
-      ? true
-      : false;
-  double ripePrecision = ((ripenessPerSide[0]
-      ? accuracyPerSide[0]
-      : 100 - accuracyPerSide[0]) +
-      (ripenessPerSide[1] ? accuracyPerSide[1] : 100 - accuracyPerSide[1]) +
-      (ripenessPerSide[2] ? accuracyPerSide[2] : 100 - accuracyPerSide[2]) +
-      (ripenessPerSide[3]
-          ? accuracyPerSide[3]
-          : 100 - accuracyPerSide[3])) /
-      4;
-  if (overallPredictionIsRipe) {
-    precision = ripePrecision;
+  print(ripeAccuracy);
+  print(unripeAccuracy);
+  var ripeAccuracyOverall = calculateAverageOfArray(ripeAccuracy);
+  var unripeAccuracyOverall = calculateAverageOfArray(unripeAccuracy);
+  if(ripeAccuracyOverall >= unripeAccuracyOverall) {
+    ResultModel.instance.setIsRipeCNN(true);
+    ResultModel.instance.setCNNA(ripeAccuracyOverall * 100);
   } else {
-    precision = 100 - ripePrecision;
+    ResultModel.instance.setIsRipeCNN(false);
+    ResultModel.instance.setCNNA(unripeAccuracyOverall * 100);
   }
-  ResultModel.instance.setIsRipeCNN(overallPredictionIsRipe);
-  ResultModel.instance.setCNNA(precision * 100);
   return false;
 }
 
 Future<List<List<List<List<int>>>>> convertXfiletoTensor4D(String imagePath, int batch, int height, int width, int imageChannel) async {
   var image = await img.decodeImageFile(imagePath);
-  var imageData = image?.toUint8List();
+  var size = image?.width;
+  var startX = 0;
+  var startY = (image!.height - size!) ~/ 2;
+  var croppedImage = img.copyCrop(image, x: startX, y: startY, height: size, width: size);
+  var resizedImage = img.copyResize(croppedImage, width: 150, height: 150);
+  var imageData = resizedImage.toUint8List();
+
   List<List<List<List<int>>>> result = List.generate(batch, (_) =>
       List.generate(height, (_) =>
           List.generate(width, (_) =>
@@ -267,7 +260,7 @@ Future<List<List<List<List<int>>>>> convertXfiletoTensor4D(String imagePath, int
     for (int j = 0; j < height; j++) {
       for (int k = 0; k < width; k++) {
         for (int l = 0; l < imageChannel; l++) {
-          result[i][j][k][l] = imageData![index++];
+          result[i][j][k][l] = imageData[index++];
         }
       }
     }
@@ -282,9 +275,8 @@ Future<bool> testRipenessByColor() async {
     UserInput.instance.image3.path,
     UserInput.instance.image4.path
   ];
-  var ripenessPerSide = [];
-  var accuracyPerSide = [];
-
+  var ripeAccuracy = [];
+  var unripeAccuracy = [];
   for (var i = 0; i < 4; i++) {
     var image = await img.decodeImageFile(imagePaths[i]);
     var imageData = image?.toUint8List();
@@ -305,40 +297,20 @@ Future<bool> testRipenessByColor() async {
     int totalPixels = imageData.lengthInBytes ~/ 4;
     double brownPercentage = brownPixelCount / totalPixels;
     double greenPercentage = greenPixelCount / totalPixels;
-    if (brownPercentage > greenPercentage) {
-      ripenessPerSide.add(true);
-      accuracyPerSide.add(brownPercentage);
-    } else {
-      ripenessPerSide.add(false);
-      accuracyPerSide.add(greenPercentage);
-    }
+    ripeAccuracy.add(brownPercentage);
+    unripeAccuracy.add(greenPercentage);
   }
-
-  bool overallPredictionIsRipe;
-  double precision;
-  overallPredictionIsRipe = 0 <=
-          ((ripenessPerSide[0] ? 1 : -1) +
-              (ripenessPerSide[1] ? 1 : -1) +
-              (ripenessPerSide[2] ? 1 : -1) +
-              (ripenessPerSide[3] ? 1 : -1))
-      ? true
-      : false;
-  double ripePrecision = ((ripenessPerSide[0]
-              ? accuracyPerSide[0]
-              : 100 - accuracyPerSide[0]) +
-          (ripenessPerSide[1] ? accuracyPerSide[1] : 100 - accuracyPerSide[1]) +
-          (ripenessPerSide[2] ? accuracyPerSide[2] : 100 - accuracyPerSide[2]) +
-          (ripenessPerSide[3]
-              ? accuracyPerSide[3]
-              : 100 - accuracyPerSide[3])) /
-      4;
-  if (overallPredictionIsRipe) {
-    precision = ripePrecision;
+  print(ripeAccuracy);
+  print(unripeAccuracy);
+  var ripeAccuracyOverall = calculateAverageOfArray(ripeAccuracy);
+  var unripeAccuracyOverall = calculateAverageOfArray(unripeAccuracy);
+  if(ripeAccuracyOverall >= unripeAccuracyOverall) {
+    ResultModel.instance.setIsRipeICA(true);
+    ResultModel.instance.setICAA(ripeAccuracyOverall * 100);
   } else {
-    precision = 100 - ripePrecision;
+    ResultModel.instance.setIsRipeICA(false);
+    ResultModel.instance.setICAA(unripeAccuracyOverall * 100);
   }
-  ResultModel.instance.setIsRipeICA(overallPredictionIsRipe);
-  ResultModel.instance.setICAA(precision * 100);
   return false;
 }
 
