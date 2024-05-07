@@ -49,7 +49,6 @@ dependencies:
   tflite_flutter: ^0.10.4
   flutter_image_compress: ^2.2.0
   image: ^4.1.7
-  image_pixels: ^3.0.1
 
 dev_dependencies:
   flutter_test:
