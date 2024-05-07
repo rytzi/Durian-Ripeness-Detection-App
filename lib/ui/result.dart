@@ -221,8 +221,11 @@ Future<bool> feedToCNNModel(Interpreter interpreter) async {
   var ripeAccuracy = [];
   var unripeAccuracy = [];
   for (var i = 0; i < 4; i++) {
-    var image = await convertXfiletoTensor4D(imagePaths[i], 1, 150, 150, 3);
+    var image = await convertXfiletoTensor4D(imagePaths[i], 1, 100, 100, 3);
     var results = List.filled(1, List.filled(2, 0.0), growable: false);
+
+    print(image.shape);
+    print(interpreter.getInputTensors());
     interpreter.run(image, results);
     ripeAccuracy.add(results[0][0]);
     unripeAccuracy.add(results[0][1]);
@@ -247,7 +250,7 @@ Future<List<List<List<List<int>>>>> convertXfiletoTensor4D(String imagePath, int
   var startX = 0;
   var startY = (image!.height - size!) ~/ 2;
   var croppedImage = img.copyCrop(image, x: startX, y: startY, height: size, width: size);
-  var resizedImage = img.copyResize(croppedImage, width: 150, height: 150);
+  var resizedImage = img.copyResize(croppedImage, width: width, height: height);
   var imageData = resizedImage.toUint8List();
 
   List<List<List<List<int>>>> result = List.generate(batch, (_) =>
