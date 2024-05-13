@@ -180,7 +180,7 @@ class _CameraScreenState extends State<CameraScreen>
                             UserInput.instance.setImage4(imageFile);
                             break;
                         }
-                        // uploadImageToFirebase(imageFile);
+                        uploadImageToFirebase(imageFile);
                         index++;
                       }
                     }
@@ -321,7 +321,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   void showInSnackBar(String message) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+        .showSnackBar(SnackBar(content: Text(message), duration: const Duration(seconds: 1),));
   }
 
   void toggleEndDrawer() {
@@ -482,12 +482,10 @@ class _CameraScreenState extends State<CameraScreen>
       var output = List.filled(1, List.filled(2, 0.0), growable: false);
       interpreter.run(result, output);
       print(output);
-      if (output[0][0] > output[0][1]) {
-        return file;
-      } else {
-        showInSnackBar('Our system is uncertain whether this picture contains a durian fruit. To improve accuracy, you can try retaking the picture.');
-        return file;
-      }
+      // if (output[0][0] < output[0][1]) {
+      //   showInSnackBar('Our system is uncertain whether this picture contains a durian fruit. To improve accuracy, you can try retaking the picture.');
+      // }
+      return file;
     } on CameraException catch (e) {
       _showCameraException(e);
       return null;

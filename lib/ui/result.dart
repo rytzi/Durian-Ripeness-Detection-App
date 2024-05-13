@@ -9,6 +9,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../helper/input.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
+// import 'package:opencv_4/opencv_4.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -203,11 +204,11 @@ Future<bool> analyzeData(aromaData) async {
 
 bool feedToANNModel(Interpreter interpreter) {
   var input = [UserInput.instance.aromaData];
-  var output = List.filled(1, List.filled(1, 0.0), growable: false);
+  var output = [1.0];
   interpreter.run(input, output);
-  ResultModel.instance.setIsRipeANN(output[0][0] >= 0.5);
+  ResultModel.instance.setIsRipeANN(output[0] >= 50);
   ResultModel.instance.setANNA(
-      output[0][0] >= 0.5 ? output[0][0] * 100 : 100 - output[0][0] * 100);
+      output[0] <= 100 ? (output[0] >= 50 ? output[0] : 100 - output[0]): 100);
   return false;
 }
 
@@ -223,7 +224,6 @@ Future<bool> feedToCNNModel(Interpreter interpreter) async {
   for (var i = 0; i < 4; i++) {
     var image = await convertXfiletoTensor4D(imagePaths[i], 1, 100, 100, 3);
     var results = List.filled(1, List.filled(2, 0.0), growable: false);
-
     print(image.shape);
     print(interpreter.getInputTensors());
     interpreter.run(image, results);
@@ -280,28 +280,46 @@ Future<bool> testRipenessByColor() async {
   ];
   var ripeAccuracy = [];
   var unripeAccuracy = [];
-  for (var i = 0; i < 4; i++) {
-    var image = await img.decodeImageFile(imagePaths[i]);
-    var imageData = image?.toUint8List();
+  var masked = [];
+  for (var path in imagePaths) {
+    var image = await img.decodeImageFile(path);
+    if (image == null) {
+      print("image empty");
+      continue;
+    }
+    // var hsv = Cv2.cvtColor(pathString: path, outputType: Cv2.COLOR_RGB2HSV);
+    var size = image.width;
+    var startX = 0;
+    var startY = (image.height - size) ~/ 2;
+    var croppedImage = img.copyCrop(image, x: startX, y: startY, height: size, width: size);
+    var imageData = croppedImage.getBytes(order: img.ChannelOrder.rgb);
     int brownPixelCount = 0;
     int greenPixelCount = 0;
-    for (int i = 0; i < imageData!.lengthInBytes; i += 4) {
-      int r = imageData[i];
-      int g = imageData[i + 1];
-      // int b = imageData[i + 2];
-      int brownIntensity = (r + g) ~/ 2;
-      int greenIntensity = g;
-      if (brownIntensity > greenIntensity) {
+    for (int j = 0; j < imageData.lengthInBytes; j += 3) {
+      int r = imageData[j];
+      int g = imageData[j + 1];
+      int b = imageData[j + 2];
+      if (r >= g && r > b) {
         brownPixelCount++;
-      } else {
+        imageData[j] = 255;
+        imageData[j + 1] = 0;
+        imageData[j + 2] = 0;
+      } else if (g > r && g > b) {
         greenPixelCount++;
+        imageData[j] = 0;
+        imageData[j + 1] = 255;
+        imageData[j + 2] = 0;
+      } else {
+        imageData[j] = 0;
+        imageData[j + 1] = 0;
+        imageData[j + 2] = 0;
       }
     }
-    int totalPixels = imageData.lengthInBytes ~/ 4;
-    double brownPercentage = brownPixelCount / totalPixels;
-    double greenPercentage = greenPixelCount / totalPixels;
+    double brownPercentage = brownPixelCount / (brownPixelCount + greenPixelCount);
+    double greenPercentage = greenPixelCount / (brownPixelCount + greenPixelCount);
     ripeAccuracy.add(brownPercentage);
     unripeAccuracy.add(greenPercentage);
+    masked.add(imageData);
   }
   print(ripeAccuracy);
   print(unripeAccuracy);
