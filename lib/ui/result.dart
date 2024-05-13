@@ -9,8 +9,6 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../helper/input.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
-// import 'package:opencv_4/opencv_4.dart';
-
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
 
@@ -299,7 +297,13 @@ Future<bool> testRipenessByColor() async {
       int r = imageData[j];
       int g = imageData[j + 1];
       int b = imageData[j + 2];
-      if (r >= g && r > b) {
+      if (r >= g &&
+          r > b &&
+          r >= 10 &&
+          r <= 200 &&
+          g >= r/4 &&
+          g <= (r-(r/4)) &&
+          b <= (g-(g/4))) {
         brownPixelCount++;
         imageData[j] = 255;
         imageData[j + 1] = 0;
