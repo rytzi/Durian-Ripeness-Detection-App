@@ -9,6 +9,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../helper/input.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
+
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
 
@@ -278,14 +279,12 @@ Future<bool> testRipenessByColor() async {
   ];
   var ripeAccuracy = [];
   var unripeAccuracy = [];
-  var masked = [];
   for (var path in imagePaths) {
     var image = await img.decodeImageFile(path);
     if (image == null) {
       print("image empty");
       continue;
     }
-    // var hsv = Cv2.cvtColor(pathString: path, outputType: Cv2.COLOR_RGB2HSV);
     var size = image.width;
     var startX = 0;
     var startY = (image.height - size) ~/ 2;
@@ -298,32 +297,22 @@ Future<bool> testRipenessByColor() async {
       int g = imageData[j + 1];
       int b = imageData[j + 2];
       if (r >= g &&
-          r > b &&
+          g > b &&
           r >= 10 &&
           r <= 200 &&
           g >= r/4 &&
-          g <= (r-(r/4)) &&
           b <= (g-(g/4))) {
         brownPixelCount++;
-        imageData[j] = 255;
-        imageData[j + 1] = 0;
-        imageData[j + 2] = 0;
-      } else if (g > r && g > b) {
+      } else if (g > r &&
+          g > b &&
+          b <= 100) {
         greenPixelCount++;
-        imageData[j] = 0;
-        imageData[j + 1] = 255;
-        imageData[j + 2] = 0;
-      } else {
-        imageData[j] = 0;
-        imageData[j + 1] = 0;
-        imageData[j + 2] = 0;
       }
     }
     double brownPercentage = brownPixelCount / (brownPixelCount + greenPixelCount);
     double greenPercentage = greenPixelCount / (brownPixelCount + greenPixelCount);
     ripeAccuracy.add(brownPercentage);
     unripeAccuracy.add(greenPercentage);
-    masked.add(imageData);
   }
   print(ripeAccuracy);
   print(unripeAccuracy);
